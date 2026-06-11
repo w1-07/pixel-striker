@@ -268,9 +268,11 @@ function bossShoot(){
 }
 
 function colCheck(a,b,r1,r2){
-  const dx=(a.x+a.w/2)-(b.x+(b.w||4)/2);
-  const dy=(a.y+a.h/2)-(b.y+(b.h||4)/2);
-  return dx*dx+dy*dy<(r1+r2)*(r1+r2);
+  const acx=a.w!=null?a.x+a.w/2:a.x;
+  const acy=a.h!=null?a.y+a.h/2:a.y;
+  const bcx=b.w!=null?b.x+b.w/2:b.x;
+  const bcy=b.h!=null?b.y+b.h/2:b.y;
+  return (acx-bcx)*(acx-bcx)+(acy-bcy)*(acy-bcy)<(r1+r2)*(r1+r2);
 }
 
 function update(){
