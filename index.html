@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>罗俊杰开飞机 - 像素打飞机</title>
+<title>骡子开飞机 - 像素打飞机</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden;background:#000;
@@ -15,7 +15,7 @@ canvas{display:block;image-rendering:pixelated;max-width:100vw;max-height:100vh;
 <body>
 <canvas id="c"></canvas>
 <script>
-// ==================== 罗俊杰开飞机 HTML5 ====================
+// ==================== 骡子开飞机 HTML5 ====================
 const W=320,H=480;
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
@@ -55,6 +55,9 @@ let touchX=null, touchY=null, touchActive=false;
 
 // ===== SECRET INVINCIBLE =====
 let secretTaps=0, secretTimer=0, godMode=false;
+
+// ===== SECRET SKIN =====
+let skinSecretTaps=0, skinSecretTimer=0, muleSkin=false;
 
 // ===== AUDIO (simple beep using oscillator) =====
 let audioCtx=null;
@@ -98,6 +101,44 @@ function drawPlayer(){
     [5,15,'#f00'],[6,15,'#f00'],[7,15,'#f00'],[8,15,'#f00'],
   ];
   px.forEach(([x,y,cl])=>{c.fillStyle=cl;c.fillRect(x,y,1,1)});
+  return s;
+}
+
+function drawMule(){
+  // 骡子卡通像素 16x16
+  const s=document.createElement('canvas');s.width=16;s.height=16;
+  const c=s.getContext('2d');
+  // 身体
+  [[5,8],[6,8],[7,8],[8,8],[9,8],[10,8]].forEach(([x,y])=>{c.fillStyle='#c8a050';c.fillRect(x,y,1,1)});
+  [[4,9],[5,9],[6,9],[7,9],[8,9],[9,9],[10,9],[11,9]].forEach(([x,y])=>{c.fillStyle='#c8a050';c.fillRect(x,y,1,1)});
+  [[4,10],[5,10],[6,10],[7,10],[8,10],[9,10],[10,10],[11,10]].forEach(([x,y])=>{c.fillStyle='#c8a050';c.fillRect(x,y,1,1)});
+  [[5,11],[6,11],[7,11],[8,11],[9,11],[10,11]].forEach(([x,y])=>{c.fillStyle='#c8a050';c.fillRect(x,y,1,1)});
+  // 头
+  [[5,3],[6,3],[7,3],[8,3],[9,3],[10,3]].forEach(([x,y])=>{c.fillStyle='#d4b060';c.fillRect(x,y,1,1)});
+  [[4,4],[5,4],[6,4],[7,4],[8,4],[9,4],[10,4],[11,4]].forEach(([x,y])=>{c.fillStyle='#d4b060';c.fillRect(x,y,1,1)});
+  [[4,5],[5,5],[6,5],[7,5],[8,5],[9,5],[10,5],[11,5]].forEach(([x,y])=>{c.fillStyle='#d4b060';c.fillRect(x,y,1,1)});
+  [[4,6],[5,6],[6,6],[7,6],[8,6],[9,6],[10,6],[11,6]].forEach(([x,y])=>{c.fillStyle='#d4b060';c.fillRect(x,y,1,1)});
+  [[5,7],[6,7],[7,7],[8,7],[9,7],[10,7]].forEach(([x,y])=>{c.fillStyle='#d4b060';c.fillRect(x,y,1,1)});
+  // 长耳朵
+  [[4,1],[5,1]].forEach(([x,y])=>{c.fillStyle='#d4b060';c.fillRect(x,y,1,1)});
+  [[3,2],[4,2],[5,2]].forEach(([x,y])=>{c.fillStyle='#d4b060';c.fillRect(x,y,1,1)});
+  [[10,1],[11,1]].forEach(([x,y])=>{c.fillStyle='#d4b060';c.fillRect(x,y,1,1)});
+  [[10,2],[11,2],[12,2]].forEach(([x,y])=>{c.fillStyle='#d4b060';c.fillRect(x,y,1,1)});
+  // 耳朵内侧
+  [[4,1],[4,2]].forEach(([x,y])=>{c.fillStyle='#e8c0a0';c.fillRect(x,y,1,1)});
+  [[11,1],[11,2]].forEach(([x,y])=>{c.fillStyle='#e8c0a0';c.fillRect(x,y,1,1)});
+  // 眼睛
+  c.fillStyle='#000';c.fillRect(6,4,2,2);c.fillRect(9,4,2,2);
+  c.fillStyle='#fff';c.fillRect(6,4,1,1);c.fillRect(9,4,1,1);
+  // 鼻子
+  c.fillStyle='#8b6040';c.fillRect(7,6,2,1);
+  // 嘴巴
+  c.fillStyle='#8b6040';c.fillRect(7,7,2,1);
+  // 腿
+  [[4,12],[5,12]].forEach(([x,y])=>{c.fillStyle='#8b6040';c.fillRect(x,y,1,1)});
+  [[10,12],[11,12]].forEach(([x,y])=>{c.fillStyle='#8b6040';c.fillRect(x,y,1,1)});
+  // 尾巴
+  c.fillStyle='#8b6040';c.fillRect(12,9,1,1);c.fillRect(13,8,1,1);
   return s;
 }
 
@@ -181,11 +222,14 @@ function createEnemy(type,sm){
 
 // ===== BOSS =====
 function createBoss(){
+  const tier=Math.floor(level/5);
+  const btype=(tier-1)%3; // 0=机甲 1=蜘蛛 2= UFO, cycle every 3 bosses
+  const hp=40+15*Math.max(0,tier-1);
   return {
     x:W/2-20,y:-40,w:40,h:40,targetY:60,entered:false,
-    maxHp:50+20*Math.max(0,Math.floor(level/5)-1),hp:50+20*Math.max(0,Math.floor(level/5)-1),
+    maxHp:hp,hp:hp,btype,
     alive:true,moveDir:1,moveTimer:0,attackTimer:0,
-    attackCd:50,phase:1,angleOff:0
+    attackCd:55,phase:1,angleOff:0,spiralAngle:0
   };
 }
 
@@ -204,6 +248,8 @@ function resetGame(){
   player.x=W/2;player.y=H-60;player.lives=3;player.weapon=1;
   player.shootCd=0;player.invT=0;player.shieldT=0;
   godMode=false;secretTaps=0;secretTimer=0;
+  skinSecretTaps=0;skinSecretTimer=0;
+  // Don't reset muleSkin - keeps skin across restarts
   pBullets=[];eBullets=[];enemies=[];powerups=[];particles=[];
   boss=null;bossSpawned=false;score=0;level=1;
   startLevel();
@@ -211,7 +257,7 @@ function resetGame(){
 
 function playerShoot(){
   if(player.shootCd>0)return;
-  player.shootCd=10;
+  player.shootCd=8;
   const cx=player.x, ty=player.y;
   const bullets=[];
   if(player.weapon===1)bullets.push({x:cx,y:ty,speed:-8});
@@ -225,13 +271,13 @@ function playerShoot(){
 function enemyShoot(e){
   if(e.type===3){ // Tank - shoot down
     e.shootTimer++;
-    if(e.shootTimer>=e.shootCd){e.shootTimer=0;eBullets.push({x:e.x+e.w/2,y:e.y+e.h,speedX:0,speedY:3,isBoss:false})}
+    if(e.shootTimer>=e.shootCd){e.shootTimer=0;eBullets.push({x:e.x+e.w/2,y:e.y+e.h,speedX:0,speedY:2.2,isBoss:false})}
   }else if(e.type===4){ // Sniper - aim at player
     e.shootTimer++;
     if(e.shootTimer>=e.shootCd){e.shootTimer=0;
       const dx=player.x-e.x-e.w/2,dy=player.y-e.y-e.h/2;
       const dist=Math.sqrt(dx*dx+dy*dy)||1;
-      eBullets.push({x:e.x+e.w/2,y:e.y+e.h,speedX:dx/dist*3.5,speedY:dy/dist*3.5,isBoss:false})}
+      eBullets.push({x:e.x+e.w/2,y:e.y+e.h,speedX:dx/dist*2.5,speedY:dy/dist*2.5,isBoss:false})}
   }
 }
 
@@ -240,33 +286,69 @@ function bossShoot(){
   boss.attackTimer++;
   if(boss.attackTimer<boss.attackCd)return;
   boss.attackTimer=0;
-  boss.angleOff+=0.15;
+  boss.angleOff+=0.12;
   const cx=boss.x+boss.w/2,cy=boss.y+boss.h-5;
-  const sp=2.5;
+  const sp=2.0;
 
-  if(boss.phase===1){
-    for(let i=0;i<12;i++){
-      const a=i/12*Math.PI*2+boss.angleOff;
-      eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp,speedY:Math.sin(a)*sp,isBoss:true});
+  if(boss.btype===0){
+    // Type 0: 机甲 — fan spread + aimed at low HP
+    if(boss.phase<=2){
+      for(let i=0;i<10;i++){
+        const a=i/10*Math.PI*2+boss.angleOff;
+        eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp,speedY:Math.sin(a)*sp,isBoss:true});
+      }
     }
-  }else if(boss.phase===2){
-    for(let i=0;i<10;i++){
-      const a=i/10*Math.PI*2+boss.angleOff;
-      eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp,speedY:Math.sin(a)*sp,isBoss:true});
+    if(boss.phase>=2){
+      const dx=player.x-cx,dy=player.y-cy,dist=Math.sqrt(dx*dx+dy*dy)||1;
+      for(let s=-0.2;s<=0.2;s+=0.2){
+        const a=Math.atan2(dy,dx)+s;
+        eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp*1.2,speedY:Math.sin(a)*sp*1.2,isBoss:true});
+      }
     }
-    // Aimed shots
-    const dx=player.x-cx,dy=player.y-cy,dist=Math.sqrt(dx*dx+dy*dy)||1;
-    for(let s=-0.3;s<=0.3;s+=0.3){
-      const a=Math.atan2(dy,dx)+s;
-      eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp*1.2,speedY:Math.sin(a)*sp*1.2,isBoss:true});
+    if(boss.phase===3){
+      for(let o=-30;o<=30;o+=20){
+        eBullets.push({x:boss.x+boss.w/2+o,y:boss.y+boss.h,speedX:0,speedY:3.5,isBoss:false});
+      }
+    }
+  }else if(boss.btype===1){
+    // Type 1: 蜘蛛 — spiral bullets
+    boss.spiralAngle=(boss.spiralAngle||0)+0.4;
+    for(let i=0;i<3;i++){
+      const a=boss.spiralAngle+i*Math.PI*2/3;
+      eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp*1.3,speedY:Math.sin(a)*sp*1.3,isBoss:true});
+    }
+    if(boss.phase>=2){
+      // extra random spray
+      for(let i=0;i<5;i++){
+        const a=Math.random()*Math.PI*2;
+        eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp,speedY:Math.abs(Math.sin(a))*sp,isBoss:false});
+      }
+    }
+    if(boss.phase===3){
+      for(let i=0;i<8;i++){
+        const a=i/8*Math.PI*2+boss.angleOff;
+        eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp*0.8,speedY:Math.sin(a)*sp*0.8,isBoss:true});
+      }
     }
   }else{
-    for(let i=0;i<16;i++){
-      const a=i/16*Math.PI*2+boss.angleOff;
-      eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp*1.2,speedY:Math.sin(a)*sp*1.2,isBoss:true});
+    // Type 2: UFO — fast aimed bursts
+    const dx=player.x-cx,dy=player.y-cy,dist=Math.sqrt(dx*dx+dy*dy)||1;
+    const baseA=Math.atan2(dy,dx);
+    for(let s=-0.25;s<=0.25;s+=0.25){
+      const a=baseA+s;
+      eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp*1.5,speedY:Math.sin(a)*sp*1.5,isBoss:true});
     }
-    for(let o=-40;o<=40;o+=20){
-      eBullets.push({x:boss.x+boss.w/2+o,y:boss.y+boss.h,speedX:0,speedY:4,isBoss:false});
+    if(boss.phase>=2){
+      for(let i=0;i<6;i++){
+        const a=i/6*Math.PI*2+boss.angleOff;
+        eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp,speedY:Math.sin(a)*sp,isBoss:true});
+      }
+    }
+    if(boss.phase===3){
+      for(let i=0;i<12;i++){
+        const a=i/12*Math.PI*2+boss.angleOff*2;
+        eBullets.push({x:cx,y:cy,speedX:Math.cos(a)*sp*1.1,speedY:Math.sin(a)*sp*1.1,isBoss:true});
+      }
     }
   }
 }
@@ -301,6 +383,7 @@ function update(){
     if(player.shieldT>0)player.shieldT--;
     // Secret tap timer
     if(secretTimer>0){secretTimer--;if(secretTimer<=0)secretTaps=0;}
+    if(skinSecretTimer>0){skinSecretTimer--;if(skinSecretTimer<=0)skinSecretTaps=0;}
 
     // Auto-shoot on mobile or space held
     if(touchActive||keys['Space'])playerShoot();
@@ -320,11 +403,11 @@ function update(){
     // Update enemies
     enemies.forEach(e=>{
       e.timer++;
-      if(e.type===0)e.y+=1.8*e.speedMult;
-      else if(e.type===1){e.y+=1.8*e.speedMult*0.9;e.x=e.initX+Math.sin(e.timer*e.freq)*e.amplitude}
-      else if(e.type===2){e.y+=1.8*e.speedMult*1.6;if(e.targetX!==null){const d=e.targetX-e.x-e.w/2;if(Math.abs(d)>2)e.x+=Math.sign(d)*2}}
-      else if(e.type===3)e.y+=1.8*e.speedMult*0.6;
-      else if(e.type===4){e.x+=e.moveDir*1.5*e.speedMult;if(e.y<100)e.y+=0.5;if(e.x<=0)e.moveDir=1;if(e.x>=W-e.w)e.moveDir=-1}
+      if(e.type===0)e.y+=1.3*e.speedMult;
+      else if(e.type===1){e.y+=1.3*e.speedMult*0.9;e.x=e.initX+Math.sin(e.timer*e.freq)*e.amplitude}
+      else if(e.type===2){e.y+=1.3*e.speedMult*1.5;if(e.targetX!==null){const d=e.targetX-e.x-e.w/2;if(Math.abs(d)>2)e.x+=Math.sign(d)*2}}
+      else if(e.type===3)e.y+=1.3*e.speedMult*0.5;
+      else if(e.type===4){e.x+=e.moveDir*1.2*e.speedMult;if(e.y<100)e.y+=0.4;if(e.x<=0)e.moveDir=1;if(e.x>=W-e.w)e.moveDir=-1}
       enemyShoot(e);
     });
     enemies=enemies.filter(e=>e.y<H+30&&e.y>-100);
@@ -370,7 +453,7 @@ function update(){
             score+=e.score;
             spawnExplosion(e.x+e.w/2,e.y+e.h/2,'#f44',10);
             sfx('explosion');
-            if(Math.random()<0.15){
+            if(Math.random()<0.25){
               const types=['weapon','life','shield','star'];
               const wts=[40,15,20,25];
               const r=Math.random()*100;let t=0,acc=wts[0];
@@ -501,14 +584,40 @@ function drawScene(){
   });
   // Boss
   if(boss&&boss.alive){
-    ctx.fillStyle='#600';ctx.fillRect(boss.x,boss.y,boss.w,boss.h);
-    ctx.fillStyle='#f00';ctx.fillRect(boss.x+6,boss.y+2,boss.w-12,6);
-    ctx.fillStyle='#fff';ctx.fillRect(boss.x+10,boss.y+3,3,3);ctx.fillRect(boss.x+16,boss.y+3,3,3);
-    ctx.fillStyle='#f80';ctx.fillRect(boss.x+2,boss.y+boss.h-4,6,4);ctx.fillRect(boss.x+boss.w-8,boss.y+boss.h-4,6,4);
+    if(boss.btype===0){ // 机甲
+      ctx.fillStyle='#600';ctx.fillRect(boss.x,boss.y,boss.w,boss.h);
+      ctx.fillStyle='#f00';ctx.fillRect(boss.x+6,boss.y+2,boss.w-12,6);
+      ctx.fillStyle='#fff';ctx.fillRect(boss.x+10,boss.y+3,3,3);ctx.fillRect(boss.x+16,boss.y+3,3,3);
+      ctx.fillStyle='#f80';ctx.fillRect(boss.x+2,boss.y+boss.h-4,6,4);ctx.fillRect(boss.x+boss.w-8,boss.y+boss.h-4,6,4);
+    }else if(boss.btype===1){ // 蜘蛛
+      ctx.fillStyle='#040';ctx.fillRect(boss.x,boss.y,boss.w,boss.h);
+      ctx.fillStyle='#0a0';ctx.fillRect(boss.x+4,boss.y+4,boss.w-8,boss.h-8);
+      // 八眼
+      for(let ex=8;ex<=28;ex+=10){
+        for(let ey=8;ey<=16;ey+=8){
+          ctx.fillStyle='#f00';ctx.fillRect(boss.x+ex,boss.y+ey,3,3);
+        }
+      }
+      // 腿
+      ctx.fillStyle='#0a0';
+      ctx.fillRect(boss.x-4,boss.y+12,6,2);ctx.fillRect(boss.x+boss.w-2,boss.y+12,6,2);
+      ctx.fillRect(boss.x-4,boss.y+24,6,2);ctx.fillRect(boss.x+boss.w-2,boss.y+24,6,2);
+    }else{ // UFO
+      ctx.fillStyle='#224';ctx.fillRect(boss.x,boss.y+8,boss.w,boss.h-8);
+      // 圆顶
+      ctx.fillStyle='#48f';ctx.beginPath();
+      ctx.ellipse(boss.x+boss.w/2,boss.y+8,boss.w/2,14,0,Math.PI,0);
+      ctx.fill();
+      // 灯光
+      for(let lx=8;lx<=28;lx+=10){
+        ctx.fillStyle=frame%20<10?'#ff0':'#f80';
+        ctx.fillRect(boss.x+lx,boss.y+boss.h-6,5,3);
+      }
+    }
   }
   // Player
   if(player.invT<=0||Math.floor(player.invT/4)%2!==0){
-    const img=cacheImg('player',drawPlayer);
+    const img=muleSkin?cacheImg('mule',drawMule):cacheImg('player',drawPlayer);
     ctx.drawImage(img,player.x-player.w/2,player.y-player.h/2);
   }
   // Shield
@@ -542,16 +651,16 @@ function drawHUD(){
     const ratio=boss.hp/boss.maxHp;
     ctx.fillStyle=ratio>0.5?'#0f0':ratio>0.25?'#ff0':'#f00';
     ctx.fillRect(bx,by,bw*ratio,bh);
-    ctx.fillStyle='#fff';ctx.fillText('BOSS',W/2-15,by-3);
+    const bossNames=['机甲守卫','蜘蛛女王','UFO母舰'];
+    ctx.fillStyle='#fff';ctx.fillText(bossNames[boss.btype]||'BOSS',W/2-ctx.measureText(bossNames[boss.btype]||'BOSS').width/2,by-3);
   }
 }
 
 function drawMenu(){
   ctx.fillStyle='#0ff';ctx.font='bold 22px monospace';
-  const titleTxt='罗俊杰开飞机';
+  const titleTxt='骡子开飞机';
   ctx.fillText(titleTxt,W/2-ctx.measureText(titleTxt).width/2,140);
   ctx.font='10px monospace';
-  ctx.fillStyle='#ff0';const subTxt='像素复古射击';ctx.fillText(subTxt,W/2-ctx.measureText(subTxt).width/2,168);
   if(Math.floor(frame/40)%2===0){
     ctx.fillStyle='#fff';ctx.font='bold 12px monospace';
     const txt=navigator.maxTouchPoints>0?'TAP TO START':'CLICK OR PRESS SPACE';
@@ -566,8 +675,11 @@ function drawMenu(){
 function drawLevelTrans(){
   ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(0,0,W,H);
   ctx.font='bold 20px monospace';
-  if(levelBoss){ctx.fillStyle='#f00';ctx.fillText('BOSS FIGHT!',W/2-65,H/2-10)}
-  else{ctx.fillStyle='#0ff';ctx.fillText('LEVEL '+level,W/2-40,H/2-10)}
+  if(levelBoss){ctx.fillStyle='#f00';
+    const bnames=['机甲守卫','蜘蛛女王','UFO母舰'];
+    const bn=bnames[(Math.floor(level/5)-1)%3];
+    ctx.fillText('BOSS: '+bn,W/2-ctx.measureText('BOSS: '+bn).width/2,H/2-10)}
+  else{ctx.fillStyle='#0ff';ctx.fillText('LEVEL '+level,W/2-ctx.measureText('LEVEL '+level).width/2,H/2-10)}
 }
 
 function drawPause(){
@@ -608,9 +720,14 @@ function handleTouch(e){
   const tx=(e.touches[0].clientX-rect.left)*scaleX;
   const ty=(e.touches[0].clientY-rect.top)*scaleY;
 
-  // Secret: tap lives area 3 times for god mode
+  // Secret: tap lives area (top-right) 3 times for god mode
   if(state===STATE.PLAYING&&tx>W-100&&ty<20){
     secretCheck();
+    return;
+  }
+  // Secret: tap score area (top-left) 3 times for mule skin
+  if(state===STATE.PLAYING&&tx<80&&ty<20){
+    skinSecretCheck();
     return;
   }
 
@@ -625,6 +742,12 @@ function secretCheck(){
   else sfx('shoot');
 }
 
+function skinSecretCheck(){
+  skinSecretTaps++;skinSecretTimer=90;
+  if(skinSecretTaps>=3){muleSkin=!muleSkin;skinSecretTaps=0;sfx('pickup');sfx('pickup');sfx('pickup')}
+  else sfx('shoot');
+}
+
 // Desktop click on lives area
 canvas.addEventListener('click',e=>{
   initAudio();
@@ -633,6 +756,7 @@ canvas.addEventListener('click',e=>{
   const cx=(e.clientX-rect.left)*scaleX;
   const cy=(e.clientY-rect.top)*scaleY;
   if(state===STATE.PLAYING&&cx>W-100&&cy<20)secretCheck();
+  if(state===STATE.PLAYING&&cx<80&&cy<20)skinSecretCheck();
   if(state===STATE.MENU)startPlay();
 });
 
