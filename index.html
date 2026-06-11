@@ -53,6 +53,9 @@ let keys={};
 // ===== TOUCH =====
 let touchX=null, touchY=null, touchActive=false;
 
+// ===== SECRET INVINCIBLE =====
+let secretTaps=0, secretTimer=0, godMode=false;
+
 // ===== AUDIO (simple beep using oscillator) =====
 let audioCtx=null;
 function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)()}
@@ -200,6 +203,7 @@ function spawnExplosion(x,y,color,count){
 function resetGame(){
   player.x=W/2;player.y=H-60;player.lives=3;player.weapon=1;
   player.shootCd=0;player.invT=0;player.shieldT=0;
+  godMode=false;secretTaps=0;secretTimer=0;
   pBullets=[];eBullets=[];enemies=[];powerups=[];particles=[];
   boss=null;bossSpawned=false;score=0;level=1;
   startLevel();
@@ -295,6 +299,8 @@ function update(){
     if(player.shootCd>0)player.shootCd--;
     if(player.invT>0)player.invT--;
     if(player.shieldT>0)player.shieldT--;
+    // Secret tap timer
+    if(secretTimer>0){secretTimer--;if(secretTimer<=0)secretTaps=0;}
 
     // Auto-shoot on mobile or space held
     if(touchActive||keys['Space'])playerShoot();
@@ -448,7 +454,7 @@ function update(){
 }
 
 function playerHit(){
-  if(player.invT>0||player.shieldT>0)return;
+  if(godMode||player.invT>0||player.shieldT>0)return;
   player.lives--;
   player.weapon=Math.max(1,player.weapon-1);
   player.invT=120;
@@ -506,9 +512,10 @@ function drawScene(){
     ctx.drawImage(img,player.x-player.w/2,player.y-player.h/2);
   }
   // Shield
-  if(player.shieldT>0){
-    ctx.strokeStyle='#0ff';ctx.lineWidth=2;ctx.beginPath();
+  if(player.shieldT>0||godMode){
+    ctx.strokeStyle=godMode?'#ff0':'#0ff';ctx.lineWidth=2;ctx.beginPath();
     ctx.arc(player.x,player.y,12,0,Math.PI*2);ctx.stroke();
+    if(godMode&&frame%10<5){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();ctx.arc(player.x,player.y,14,0,Math.PI*2);ctx.stroke()}
   }
   // Particles
   particles.forEach(p=>{
@@ -524,6 +531,10 @@ function drawHUD(){
   // Lives
   for(let i=0;i<player.lives;i++){ctx.fillStyle='#f6c';ctx.fillRect(W-20-i*16,4,6,6)}
   if(player.shieldT>0){ctx.fillStyle='#4af';ctx.fillText('SHIELD:'+Math.ceil(player.shieldT/60)+'s',W-80,H-4)}
+  // God mode indicator
+  if(godMode){ctx.fillStyle='#ff0';ctx.font='bold 12px monospace';ctx.fillText('INVINCIBLE',W/2-35,H-4)}
+  // Secret tap progress
+  if(secretTaps>0){ctx.fillStyle='#f80';ctx.font='8px monospace';ctx.fillText('*'.repeat(secretTaps),W-100,18)}
   // Boss HP
   if(boss&&boss.alive&&boss.entered){
     const bw=200,bh=8,bx=(W-bw)/2,by=25;
@@ -575,7 +586,6 @@ function drawGameOver(){
 }
 
 // ===== INPUT =====
-canvas.addEventListener('click',e=>{initAudio();if(state===STATE.MENU)startPlay()});
 canvas.addEventListener('touchstart',handleTouch,{passive:false});
 canvas.addEventListener('touchmove',handleTouch,{passive:false});
 canvas.addEventListener('touchend',e=>{touchActive=false;touchX=null;touchY=null});
@@ -592,14 +602,38 @@ document.addEventListener('keyup',e=>{keys[e.code]=false});
 
 function handleTouch(e){
   e.preventDefault();initAudio();
-  if(state===STATE.MENU){startPlay();return}
-  if(state===STATE.GAME_OVER){resetGame();state=STATE.LEVEL_TRANS;levelTimer=80;levelBoss=false;return}
   const rect=canvas.getBoundingClientRect();
   const scaleX=W/rect.width,scaleY=H/rect.height;
-  touchX=(e.touches[0].clientX-rect.left)*scaleX;
-  touchY=(e.touches[0].clientY-rect.top)*scaleY;
-  touchActive=true;
+  const tx=(e.touches[0].clientX-rect.left)*scaleX;
+  const ty=(e.touches[0].clientY-rect.top)*scaleY;
+
+  // Secret: tap lives area 3 times for god mode
+  if(state===STATE.PLAYING&&tx>W-100&&ty<20){
+    secretCheck();
+    return;
+  }
+
+  if(state===STATE.MENU){startPlay();return}
+  if(state===STATE.GAME_OVER){resetGame();state=STATE.LEVEL_TRANS;levelTimer=80;levelBoss=false;return}
+  touchX=tx;touchY=ty;touchActive=true;
 }
+
+function secretCheck(){
+  secretTaps++;secretTimer=90;
+  if(secretTaps>=3){godMode=true;secretTaps=0;sfx('pickup');sfx('pickup');sfx('pickup')}
+  else sfx('shoot');
+}
+
+// Desktop click on lives area
+canvas.addEventListener('click',e=>{
+  initAudio();
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=W/rect.width,scaleY=H/rect.height;
+  const cx=(e.clientX-rect.left)*scaleX;
+  const cy=(e.clientY-rect.top)*scaleY;
+  if(state===STATE.PLAYING&&cx>W-100&&cy<20)secretCheck();
+  if(state===STATE.MENU)startPlay();
+});
 
 function startPlay(){
   resetGame();state=STATE.LEVEL_TRANS;levelTimer=80;levelBoss=false;
