@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>PIXEL STRIKER - 像素打飞机</title>
+<title>罗俊杰开飞机 - 像素打飞机</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden;background:#000;
@@ -15,7 +15,7 @@ canvas{display:block;image-rendering:pixelated;max-width:100vw;max-height:100vh;
 <body>
 <canvas id="c"></canvas>
 <script>
-// ==================== PIXEL STRIKER HTML5 ====================
+// ==================== 罗俊杰开飞机 HTML5 ====================
 const W=320,H=480;
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
@@ -548,9 +548,10 @@ function drawHUD(){
 
 function drawMenu(){
   ctx.fillStyle='#0ff';ctx.font='bold 22px monospace';
-  ctx.fillText('PIXEL STRIKER',W/2-90,140);
+  const titleTxt='罗俊杰开飞机';
+  ctx.fillText(titleTxt,W/2-ctx.measureText(titleTxt).width/2,140);
   ctx.font='10px monospace';
-  ctx.fillStyle='#ff0';ctx.fillText('RETRO ARCADE SHOOTER',W/2-72,168);
+  ctx.fillStyle='#ff0';const subTxt='像素复古射击';ctx.fillText(subTxt,W/2-ctx.measureText(subTxt).width/2,168);
   if(Math.floor(frame/40)%2===0){
     ctx.fillStyle='#fff';ctx.font='bold 12px monospace';
     const txt=navigator.maxTouchPoints>0?'TAP TO START':'CLICK OR PRESS SPACE';
